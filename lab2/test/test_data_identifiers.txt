@@ -1,0 +1,10 @@
+Scanned ID 'ABC'
+Scanned ID 'ABC123'
+Scanned ID 'E2'
+Scanned ID 'ABC_123'
+Scanned ID 'ABC_123_ABC'
+Scanned INTEGER '123'
+Scanned ID 'ABC'
+Scanned '_'
+Scanned ID 'ABC123_'
+End of file

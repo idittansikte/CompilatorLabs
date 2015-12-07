@@ -1,0 +1,12 @@
+Scanned INTEGER '1'
+Scanned INTEGER '2'
+Scanned INTEGER '3'
+Scanned INTEGER '4'
+Scanned INTEGER '5'
+Scanned INTEGER '6'
+Scanned INTEGER '7'
+Warning at line 10: Nested comments
+Scanned INTEGER '8'
+Warning at line 11: Nested comments
+Error at line 12: Comment goes beyond end of file.
+End of file

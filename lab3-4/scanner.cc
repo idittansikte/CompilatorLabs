@@ -1031,85 +1031,85 @@ return OF;
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 65 "scanner.l"
-return INTEGER; 
+#line 64 "scanner.l"
+{ yyerror("DFGDFGDD."); return INTEGER; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 66 "scanner.l"
+#line 65 "scanner.l"
 return ID;
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 67 "scanner.l"
+#line 66 "scanner.l"
 return REAL;
 	YY_BREAK
 case 26:
 /* rule 26 can match eol */
 YY_RULE_SETUP
-#line 68 "scanner.l"
+#line 67 "scanner.l"
 /* Do nothing */
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 69 "scanner.l"
+#line 68 "scanner.l"
 /* Do nothing */
 	YY_BREAK
 case 28:
 /* rule 28 can match eol */
 YY_RULE_SETUP
-#line 70 "scanner.l"
+#line 69 "scanner.l"
 /* Do nothing */
 	YY_BREAK
 
 case 29:
 YY_RULE_SETUP
-#line 72 "scanner.l"
+#line 71 "scanner.l"
 BEGIN(ML_COMMENT);
 	YY_BREAK
 
 case 30:
 YY_RULE_SETUP
-#line 74 "scanner.l"
+#line 73 "scanner.l"
 BEGIN(INITIAL);
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 75 "scanner.l"
+#line 74 "scanner.l"
 fprintf(stderr, "Warning at line %i: Nested comments\n", yylineno);
 	YY_BREAK
 case YY_STATE_EOF(ML_COMMENT):
-#line 76 "scanner.l"
+#line 75 "scanner.l"
 { yyerror("Comment goes beyond end of file."); yyterminate(); }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 77 "scanner.l"
+#line 76 "scanner.l"
 /* Do nothing */
 	YY_BREAK
 case 33:
 /* rule 33 can match eol */
 YY_RULE_SETUP
-#line 78 "scanner.l"
+#line 77 "scanner.l"
 /* Do nothing */
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 79 "scanner.l"
+#line 78 "scanner.l"
 /* Do nothing */
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 82 "scanner.l"
+#line 81 "scanner.l"
 yyterminate();
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 83 "scanner.l"
+#line 82 "scanner.l"
 return yytext[0];
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 85 "scanner.l"
+#line 84 "scanner.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
 #line 1116 "scanner.cc"
@@ -2120,7 +2120,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 85 "scanner.l"
+#line 84 "scanner.l"
 
 
 

@@ -53,16 +53,15 @@ do                                  return DO;
 and                                 return AND;
 or                                  return OR;
 not                                 return NOT;
-:=                                  return ASSIGN;
+":="                                  return ASSIGN;
 ">="                                return GE;
 "<="                                return LE;
-==                                  return EQ;
+"=="                                  return EQ;
 "<>"                                return NE;
 array                               return ARRAY;
 of                                  return OF;
 
-
-{DIGIT}+                            return INTEGER; 
+{DIGIT}+                            { yyerror("DFGDFGDD."); return INTEGER; }
 {LETTER}+[0-9a-zA-Z_]*              return ID;
 [0-9]*(([0-9]+(\.))|((\.)[0-9]+))?{EXP}? return REAL;
 \n                    /* Do nothing */

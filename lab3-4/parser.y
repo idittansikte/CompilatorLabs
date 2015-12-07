@@ -189,13 +189,10 @@ functions   :   functions function
 
 function : funcnamedecl parameters ':' type variables functions block ';'
 	 {
-	  cout << " => Function here.. Setting return type.." << endl;
+	  cout << " => Function here.." << endl;
 	  currentFunction->SetReturnType($4);
-	  cout << "Setting body" << endl;
 	  currentFunction->SetBody($7);
-	  cout << "Setting currentFunction to parent" << endl;
 	  currentFunction=currentFunction->GetParent();
-	  cout << "Function END" << endl;
 	 }
          | error ';'
          {
@@ -206,23 +203,18 @@ function : funcnamedecl parameters ':' type variables functions block ';'
 funcnamedecl : FUNCTION id 
              {
 	       const ::string id = *($2);
-	       cout << " => Function decl name: " << id << " and checking if already exists.."<< endl;
+	       cout << " => funcnamedecl. Name: " << id << endl;
+	       FunctionInformation *nf = new FunctionInformation(id);
+	       nf->SetParent(currentFunction);
 	       if (currentFunction->OkToAddSymbol(id))
 		 {
-		   cout << "Creating new functionInformation" << endl;
-		   FunctionInformation *nf = new FunctionInformation(id);
-		   cout << "Setting its parent to currentFunction" << endl;
-		   nf->SetParent(currentFunction);
-		   cout << "Calling AddFunction" << endl;
 		   currentFunction->AddFunction(id, nf);
-		   cout << "Setting currentFunction to the new functionInformation...";
-		   currentFunction=nf;
-		   cout << "END" << endl;
 		 }
                else
 		 {
 		   error() << *($2) << " is already declared\n" << flush;
 		 }
+	       currentFunction=nf;
 	     }
              | error
 	     {
@@ -643,28 +635,63 @@ expression : expression '+' term
 
 term       : term '*' factor
            {
-	     $$ = new Times($1, $3);
+	     if ($1 == NULL || $3 == NULL)
+	       $$ = NULL;
+	     else
+	       $$ = new Times($1, $3);
 	   } 
            | term '/' factor
            {
-	     $$ = new Divide($1, $3);
+	     if ($1 == NULL || $3 == NULL)
+	       $$ = NULL;
+	     else
+	       $$ = new Divide($1, $3);
            }
            | factor
 	   {
-	     $$ = $1;
+	     if($1 == NULL)
+	       $$ = NULL;
+	     else
+	       $$ = $1;
 	   }
-	   ;
+           ;
 
 factor     : num '^' factor
            {
-	     $$ = new Power($1, $3);
+	     if ($1 == NULL || $3 == NULL )
+	       $$ = NULL;
+	     else
+	       $$ = new Power($1, $3);
 	   }
-           | num { $$ = $1; }
+           | num 
+	   { 
+	     if ($1 == NULL)
+	       $$ = NULL;
+	     else
+	       $$ = $1; 
+	   }
            ;
 
-num        : real { $$ = new RealConstant($1); }
-           | integer { $$ = new IntegerConstant($1); }
-           | variable { $$ = new Identifier($1); }
+num        : real 
+           { 
+	     cout << "Expression real" << endl;
+	     $$ = new RealConstant($1); 
+	   }
+           | integer 
+	   { 
+	     cout << "Expression integer" << endl;
+	     $$ = new IntegerConstant($1); 
+	   }
+           | lvalue 
+	   { 
+	     cout << "Expression lvalue" << endl;
+	     $$ = $1; 
+	   }
+           | /* Empty */ 
+           { 
+	     cout << "Expression NULL" << endl;
+	     $$ = NULL; 
+	   }
            ;
           
 /* --- End your code --- */
@@ -705,9 +732,29 @@ expressionz : expressionz ',' expression
  * elsewhere, so make sure you get it right.
  */
 
-condition :
+condition : expression EQ expression
 	{
-	  cerr << "Condition here" << endl;
+	    $$ = new Equal($1, $3);
+	}
+        | expression GE expression
+        {
+	  $$ = new GreaterThanOrEqual($1, $3);
+	}
+        | expression LE expression
+        {
+	  $$ = new LessThanOrEqual($1, $3);
+	}
+        | expression NE expression
+        {
+	  $$ = new NotEqual($1, $3);
+	}
+        | expression '<' expression
+        {
+	  $$ = new LessThan($1, $3);
+	}
+        | expression '>' expression
+        {
+	  $$ = new GreaterThan($1, $3);
 	}
 	;
 

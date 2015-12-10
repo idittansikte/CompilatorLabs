@@ -61,7 +61,7 @@ not                                 return NOT;
 array                               return ARRAY;
 of                                  return OF;
 
-{DIGIT}+                            { yyerror("DFGDFGDD."); return INTEGER; }
+{DIGIT}+                            { return INTEGER; }
 {LETTER}+[0-9a-zA-Z_]*              return ID;
 [0-9]*(([0-9]+(\.))|((\.)[0-9]+))?{EXP}? return REAL;
 \n                    /* Do nothing */

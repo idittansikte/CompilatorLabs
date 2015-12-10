@@ -10,7 +10,7 @@ declare
  * We would expect the compiler to complain when we
  * try to create a function f, but to continue parsing.
 */
-function f (x : integer;
+function fK (x : integer;
             y : real;
             z : array 10 of integer) : integer
 begin
@@ -19,7 +19,7 @@ end;
 
 function fac (x : integer) : integer
 begin
-    if x == 0.5 then
+    if x == 5 then
       begin
         return 1;
       end

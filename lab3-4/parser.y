@@ -97,6 +97,7 @@ extern ostream& warning(void);
 %left '*''/'
 %right '='
 %right '^'
+%left '<' '>' NE LE GE
 %token AND OR NOT
 /* --- End your code --- */
 
@@ -121,7 +122,7 @@ program     :   variables functions block ';'
                 if (errorCount == 0)
                 {
                     currentFunction->SetBody($3);
-                    /* currentFunction->GenerateCode(); */
+                    currentFunction->GenerateCode();
                     cout << currentFunction;
                 }
             }
@@ -187,23 +188,32 @@ functions   :   functions function
  * them. Just calling GeneratCode in the function should do the trick.
  */
 
-function : funcnamedecl parameters ':' type variables functions block ';'
-	 {
-	  cout << " => Function here.." << endl;
-	  currentFunction->SetReturnType($4);
-	  currentFunction->SetBody($7);
-	  currentFunction=currentFunction->GetParent();
-	 }
-         | error ';'
-         {
-           yyerrok;
-         }
-	 ;
+function     : funcnamedecl parameters ':' functype variables functions block ';'
+             {
+	       //cout << " => Function here.." << endl;
+	       //currentFunction->SetReturnType($4);
+	       //cout << "Return type: " << $4 << endl;
+	       //cout << "Block: " << $7->statement << endl;
+	       currentFunction->SetBody($7);
+	       currentFunction->GenerateCode();
+	       cout << currentFunction;
+	       currentFunction=currentFunction->GetParent();
+	     }
+             | error ';'
+             {
+	       yyerrok;
+	     }
+             ;
+
+functype     : type
+             {
+	       currentFunction->SetReturnType($1);
+	     }  
 
 funcnamedecl : FUNCTION id 
              {
 	       const ::string id = *($2);
-	       cout << " => funcnamedecl. Name: " << id << endl;
+	       cout << " => Doing function: " << id << endl;
 	       FunctionInformation *nf = new FunctionInformation(id);
 	       nf->SetParent(currentFunction);
 	       if (currentFunction->OkToAddSymbol(id))
@@ -610,7 +620,9 @@ real        :   REAL
 
 expression : expression '+' term
            {
-	     cout << "Expression plus" << endl;
+	     if(! CheckCompatibleTypes(&($1), &($3)))
+	        error() << "Types in expression is not compatible\n" << flush;
+		  
 	     if( $1 == NULL || $3 == NULL)
 	       $$ = NULL;
 	     else
@@ -618,7 +630,9 @@ expression : expression '+' term
 	   }
            | expression '-' term
 	   {
-	     cerr << "Expression minus" << endl;
+	     if(! CheckCompatibleTypes(&($1), &($3)))
+	        error() << "Types in expression is not compatible\n" << flush;
+
 	     if( $1 == NULL || $3 == NULL)
 	       $$ = NULL;
 	     else
@@ -635,13 +649,20 @@ expression : expression '+' term
 
 term       : term '*' factor
            {
+	     if(! CheckCompatibleTypes(&($1), &($3)))
+	       error() << "Types in expression is not compatible\n" << flush;
 	     if ($1 == NULL || $3 == NULL)
 	       $$ = NULL;
-	     else
-	       $$ = new Times($1, $3);
+	     else{
+	       Times * t = new Times($1, $3);
+	       //cout << t << endl;
+	       $$ = t;
+	     }
 	   } 
            | term '/' factor
            {
+	     if(! CheckCompatibleTypes(&($1), &($3)))
+	       error() << "Types in expression is not compatible\n" << flush;
 	     if ($1 == NULL || $3 == NULL)
 	       $$ = NULL;
 	     else
@@ -658,6 +679,8 @@ term       : term '*' factor
 
 factor     : num '^' factor
            {
+	     if(! CheckCompatibleTypes(&($1), &($3)))
+	       error() << "Types in expression is not compatible\n" << flush;
 	     if ($1 == NULL || $3 == NULL )
 	       $$ = NULL;
 	     else
@@ -674,22 +697,34 @@ factor     : num '^' factor
 
 num        : real 
            { 
-	     cout << "Expression real" << endl;
+	     //cout << "Expression real" << endl;
 	     $$ = new RealConstant($1); 
 	   }
            | integer 
 	   { 
-	     cout << "Expression integer" << endl;
+	     //cout << "Expression integer" << endl;
 	     $$ = new IntegerConstant($1); 
 	   }
            | lvalue 
 	   { 
-	     cout << "Expression lvalue" << endl;
+	     //cout << "Expression lvalue" << endl;
 	     $$ = $1; 
+	   }
+           | funcname '(' expressionz ')'
+	   {
+	     $$ = new FunctionCall($1, $3); 
+	   }
+           | '(' expression ')'
+	   {
+	     $$ = $2; 
+	   }
+           | '-' expression
+	   {
+	     $$ = new UnaryMinus($2); 
 	   }
            | /* Empty */ 
            { 
-	     cout << "Expression NULL" << endl;
+	     //cout << "Expression NULL" << endl;
 	     $$ = NULL; 
 	   }
            ;
@@ -734,27 +769,68 @@ expressionz : expressionz ',' expression
 
 condition : expression EQ expression
 	{
-	    $$ = new Equal($1, $3);
+	  if(! CheckCompatibleTypes(&($1), &($3)))
+	    error() << "Types in condition is not compatible\n" << flush;
+	  $$ = new Equal($1, $3);
 	}
         | expression GE expression
         {
+	  if(! CheckCompatibleTypes(&($1), &($3)))
+	    error() << "Types in condition is not compatible\n" << flush;
 	  $$ = new GreaterThanOrEqual($1, $3);
 	}
         | expression LE expression
         {
+	  if(! CheckCompatibleTypes(&($1), &($3)))
+	    error() << "Types in condition is not compatible\n" << flush;
 	  $$ = new LessThanOrEqual($1, $3);
 	}
         | expression NE expression
         {
+	  if(! CheckCompatibleTypes(&($1), &($3)))
+	    error() << "Types in condition is not compatible\n" << flush;
 	  $$ = new NotEqual($1, $3);
 	}
         | expression '<' expression
         {
+	  if(! CheckCompatibleTypes(&($1), &($3)))
+	    error() << "Types in condition is not compatible\n" << flush;
 	  $$ = new LessThan($1, $3);
 	}
         | expression '>' expression
         {
+	  if(! CheckCompatibleTypes(&($1), &($3)))
+	    error() << "Types in condition is not compatible\n" << flush;
 	  $$ = new GreaterThan($1, $3);
+	}
+        | TRUE
+	{
+	  $$ = new BooleanConstant(1);
+	}
+        | FALSE
+	{
+	  $$ = new BooleanConstant(0);
+	}
+        | condition AND condition
+	{
+	  $$ = new And($1, $3);
+	}
+        | condition OR condition
+	{
+	  $$ = new Or($1, $3);
+	}
+        | NOT condition
+	{
+	  $$ = new Not($2);
+	}
+        | '(' condition ')'
+	{
+	  $$ = $2;
+	}
+        | /* Everything else */
+        {
+	  error() << "Unknown condition\n" << flush;
+	  $$ = NULL;
 	}
 	;
 
@@ -789,7 +865,31 @@ int warningCount = 0;
 
 char CheckCompatibleTypes(Expression **left, Expression **right)
 {
-    return 0;
+  if (*left == NULL || *right == NULL)
+    return 1;
+  if ((*left)->valueType == (*right)->valueType)
+    {
+      return 1;
+    }
+  if ((*left)->valueType == kRealType && (*right)->valueType == kRealType)
+    {
+      return 1;
+    }
+  if ((*left)->valueType == kIntegerType && (*right)->valueType == kIntegerType)
+    {
+      return 1;
+    }
+  if ((*left)->valueType == kIntegerType && (*right)->valueType == kRealType)
+    {
+      *left = new IntegerToReal(*left);
+      return 1;
+    }
+  if ((*left)->valueType == kRealType && (*right)->valueType == kIntegerType)
+    {
+      *right = new IntegerToReal(*right);
+      return 1;
+    }
+  return 0;
 }
 
 /* --- End your code --- */
@@ -911,11 +1011,15 @@ char CheckFunctionParameters(FunctionInformation *func,
 
 char CheckReturnType(Expression **expr, TypeInformation *info)
 {
-    if (info == NULL || *expr == NULL)
-        return 1;
 
-    if ((*expr)->valueType == info)
-        return 1;
+  //cout << "=> CheckReturnType" << endl << "Expr type: " << (*expr)->valueType << endl << "Returntype: " << info->id << endl;
+  if (info == NULL || *expr == NULL){
+    return 1;
+  }
+
+    if ((*expr)->valueType == info){
+      return 1;
+    }
 
     if ((*expr)->valueType == kIntegerType && info == kRealType)
     {

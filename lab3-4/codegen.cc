@@ -36,7 +36,15 @@ VariableInformation *ASTNode::GenerateCodeAndJump(QuadsList& q,
 
     return info;
 }
-
+/*
+    loopLabel = q.NextLabel();
+    endLabel = q.NextLabel();
+    q += new Quad(clabel, loopLabel, NULL, NULL);
+    info = condition->GenerateCode(q);
+    q += new Quad(jfalse, endLabel, info, NULL);
+    body->GenerateCodeAndJump(q, loopLabel);
+    q += new Quad(clabel, endLabel, NULL, NULL);
+*/
 
 /* ElseIfStatement::GenerateCodeAndJump
  *
@@ -55,11 +63,19 @@ VariableInformation *ElseIfList::GenerateCodeAndJump(QuadsList &q,
     VariableInformation     *info;
 
     /* --- Your code here --- */
-
+    next = q.NextLabel();
+    info = condition->GenerateCode(q);
+    q += new Quad(jfalse, next, info, (SymbolInformation *)NULL); // If condition false, jump to next elseif
+    body->GenerateCodeAndJump(q, lbl); // If condition true, generate code and jump to the very end
+    q += new Quad(clabel, next, NULL, NULL);
+   
+    if (preceding != NULL)
+    {
+      preceding->GenerateCodeAndJump(q, lbl);
+    }
     /* --- End your code --- */
 
     return NULL;
-
 }
 
 
@@ -73,9 +89,51 @@ VariableInformation *ElseIfList::GenerateCodeAndJump(QuadsList &q,
 void ArrayReference::GenerateAssignment(QuadsList& q,
                                         VariableInformation *val)
 {
-    /* --- Your code here --- */
+   /* --- Your code here --- */
+  //cout << "Q: "<< q << endl;
+  VariableInformation *arrayTypeSize, *steps, *calcIndex, *addr, *baseAdr;
 
-    /* --- End your code --- */
+  if (val->type == NULL || id->type == NULL)
+    {
+      cerr << "Bug: A.R. you created an untyped variable.\n";
+      abort();
+    }
+  //baseAdr = currentFunction->TemporaryVariable(kIntegerType);
+  arrayTypeSize = currentFunction->TemporaryVariable(kIntegerType);
+  baseAdr = currentFunction->TemporaryVariable(kIntegerType);
+  addr = currentFunction->TemporaryVariable(kIntegerType);
+  //result = currentFunction->TemporaryVariable(kIntegerType);
+  steps = currentFunction->TemporaryVariable(kIntegerType);
+  calcIndex = index->GenerateCode(q);
+  //constIndex = currentFunction->TemporaryVariable(calcIndex->type);
+  //cout << "Array size : " << id->type->arrayDimensions << endl;
+  //cout << "Node Size: " << *(id->type->elementType) << endl;
+  //cout << "Node Size: " << id->type->elementType->size << endl;
+  //cout << "Index: " << *constIndex << endl;
+  q += new Quad(iaddr, id, NULL, baseAdr);
+  q += new Quad(iconst,(long)id->type->elementType->size, NULL, arrayTypeSize);
+  q += new Quad(imul, arrayTypeSize, calcIndex, steps);
+  q += new Quad(iadd, steps, baseAdr, addr);
+
+  if (id->type->elementType == kIntegerType)
+    {
+      q += new Quad(iassign, 
+		    dynamic_cast<SymbolInformation*>(val), 
+		    static_cast<SymbolInformation*>(NULL),
+		    dynamic_cast<SymbolInformation*>(addr));
+    }
+  else if (id->type->elementType == kRealType)
+    {
+      q += new Quad(rassign, 
+		    dynamic_cast<SymbolInformation*>(val),
+		    static_cast<SymbolInformation*>(NULL),
+		    dynamic_cast<SymbolInformation*>(addr));
+    }
+  else if (id->type->elementType == val->type)
+    {
+      q += new Quad(aassign, val, val->type->arrayDimensions, addr);
+    }
+  /* --- End your code --- */
 }
 
 /*
@@ -89,7 +147,7 @@ void Identifier::GenerateAssignment(QuadsList& q, VariableInformation *val)
 {
     if (val->type == NULL || id->type == NULL)
     {
-        cerr << "Bug: you created an untyped variable.\n";
+        cerr << "Bug Indent: you created an untyped variable.\n";
         abort();
     }
     if (id->type == kIntegerType)
@@ -148,10 +206,28 @@ VariableInformation *StatementList::GenerateCode(QuadsList &q)
 
 VariableInformation *IfStatement::GenerateCode(QuadsList& q)
 {
-    /* --- Your code here ---*/
+  /* --- Your code here ---*/
+  VariableInformation      *info;
+  long                     elseIfLabel, elseLabel, endLabel;
 
-    
-    /* --- End your code --- */
+  elseIfLabel = q.NextLabel();
+  elseLabel = q.NextLabel();
+  endLabel = q.NextLabel();
+
+  // If statements
+  info = condition->GenerateCode(q);
+  q += new Quad(jfalse, elseIfLabel, info, (SymbolInformation *)NULL); // If condition false, jump to next elseif
+  thenStatements->GenerateCodeAndJump(q, endLabel); // If condition true, generate code and jump to the very end
+
+  // Elseif statements
+  q += new Quad(clabel, elseIfLabel, NULL, NULL);
+  if(elseIfList != NULL){
+    elseIfList->GenerateCodeAndJump(q, endLabel); 
+  }
+
+  elseStatements->GenerateCode(q);
+  q += new Quad(clabel, endLabel, NULL, NULL);
+  /* --- End your code --- */
     
     return NULL;
 }
@@ -254,8 +330,29 @@ VariableInformation *BooleanConstant::GenerateCode(QuadsList& q)
 
 VariableInformation *ArrayReference::GenerateCode(QuadsList& q)
 {
-    /* --- Your code here --- */
+  /* --- Your code here --- */
 
+  VariableInformation *result, *arrayTypeSize, *steps, *calcIndex, *addr, *baseAdr;
+
+  //baseAdr = currentFunction->TemporaryVariable(kIntegerType);
+  arrayTypeSize = currentFunction->TemporaryVariable(kIntegerType);
+  baseAdr = currentFunction->TemporaryVariable(kIntegerType);
+  addr = currentFunction->TemporaryVariable(kIntegerType);
+  result = currentFunction->TemporaryVariable(kIntegerType);
+  steps = currentFunction->TemporaryVariable(kIntegerType);
+  calcIndex = index->GenerateCode(q);
+  //constIndex = currentFunction->TemporaryVariable(calcIndex->type);
+  //cout << "Array size : " << id->type->arrayDimensions << endl;
+  //cout << "Node Size: " << *(id->type->elementType) << endl;
+  //cout << "Node Size: " << id->type->elementType->size << endl;
+  //cout << "Index: " << *constIndex << endl;
+  q += new Quad(iaddr, id, NULL, baseAdr);
+  q += new Quad(iconst,(long)id->type->elementType->size, NULL, arrayTypeSize);
+  q += new Quad(imul, arrayTypeSize, calcIndex, steps);
+  q += new Quad(iadd, steps, baseAdr, addr);
+  q += new Quad(istore, addr, NULL, result);
+  //cout << *result << endl;
+  return result;
     /* --- End your code --- */
 }
 
@@ -463,7 +560,29 @@ static VariableInformation *BinaryGenerateCode(QuadsList& q,
     VariableInformation *leftInfo, *rightInfo, *result;
 
     /* --- Your code here --- */
-     
+    leftInfo = left->GenerateCode(q);
+    rightInfo = right->GenerateCode(q);
+    if(leftInfo->type != rightInfo->type){
+      cerr << "Bug: The binary operator or relation does not match\n";
+      cout << "left: "<< leftInfo->type << "\nright: " << rightInfo->type << "\nNode:" << node << endl;
+      abort();
+    }
+
+    if(type == NULL){
+      result = currentFunction->TemporaryVariable(leftInfo->type);
+    }else {
+      result = currentFunction->TemporaryVariable(type);
+    }
+
+    if( leftInfo->type == kIntegerType ){
+      q += new Quad(intop, leftInfo, rightInfo, result);
+    }
+    else if (leftInfo->type == kRealType){
+      q += new Quad(realop, leftInfo, rightInfo, result);
+    }
+    
+    //cout << "left: "<< leftInfo->type << " :: " << rightInfo->type<< endl;
+    return result;
     /* --- End your code --- */
 }
 

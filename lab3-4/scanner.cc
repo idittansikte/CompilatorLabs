@@ -1032,7 +1032,7 @@ return OF;
 case 23:
 YY_RULE_SETUP
 #line 64 "scanner.l"
-{ yyerror("DFGDFGDD."); return INTEGER; }
+{ return INTEGER; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP

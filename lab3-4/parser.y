@@ -190,10 +190,6 @@ functions   :   functions function
 
 function     : funcnamedecl parameters ':' functype variables functions block ';'
              {
-	       //cout << " => Function here.." << endl;
-	       //currentFunction->SetReturnType($4);
-	       //cout << "Return type: " << $4 << endl;
-	       //cout << "Block: " << $7->statement << endl;
 	       currentFunction->SetBody($7);
 	       currentFunction->GenerateCode();
 	       cout << currentFunction;
@@ -213,7 +209,7 @@ functype     : type
 funcnamedecl : FUNCTION id 
              {
 	       const ::string id = *($2);
-	       cout << " => Doing function: " << id << endl;
+	       //cout << " => Doing function: " << id << endl;
 	       FunctionInformation *nf = new FunctionInformation(id);
 	       nf->SetParent(currentFunction);
 	       if (currentFunction->OkToAddSymbol(id))

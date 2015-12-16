@@ -14,6 +14,14 @@ long QuadsList::labelCounter;
 #define USEQ { QuadsList *xyzzy = &q; xyzzy=xyzzy; }
 
 
+/**
+   Question 1:
+   Instead of generate a quad in the constant code generation we could just return the 
+   temorary variable instead of inserting it to a register first and then in the 
+   function that we've returned to just add or assign or whatever directly insead by 
+   going through a register first.
+ */
+
 /*
  * ASTNode::GenerateCodeAndJump
  *
@@ -225,7 +233,9 @@ VariableInformation *IfStatement::GenerateCode(QuadsList& q)
     elseIfList->GenerateCodeAndJump(q, endLabel); 
   }
 
-  elseStatements->GenerateCode(q);
+  if (elseStatements != NULL){
+    elseStatements->GenerateCode(q);
+  }
   q += new Quad(clabel, endLabel, NULL, NULL);
   /* --- End your code --- */
     
